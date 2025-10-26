@@ -1,152 +1,170 @@
-# calhacks-2025
-MCP BOM Ordering
+# BOM to Order
 
-an agentic ai app that streamlines and automates ordering parts from a bill of materials (bom)
+An intelligent Bill of Materials (BOM) processing application that automatically extracts part information from uploaded files and finds affordable seller recommendations.
 
-## overview
+## Features
 
-this app uses ai agents to:
-1. parse a bom csv file
-2. find relevant supplier websites using gemini api
-3. control browsers via mcp protocol with chatgpt to search for parts and prices
-4. add parts to shopping carts automatically
-5. export results with pricing and links back to csv
+- 📄 **Multi-format Support**: Upload CSV, Excel, or text files
+- 🤖 **AI-Powered Parsing**: Uses Ollama LLM to intelligently extract part names and quantities
+- 🔍 **Smart Seller Lookup**: Leverages Google Gemini to find affordable sellers for each part
+- 💻 **Modern UI**: Clean, responsive React interface with real-time previews
+- 🚀 **Complete Pipeline**: Seamless integration from upload to seller recommendations
 
-## setup
+## Quick Start
 
-1. install dependencies:
+# 1. Install prerequisites (if not already)
+# - Ollama: https://ollama.ai
+# - Pull model: ollama pull llama3.2:1b
+# - Create API_Key.txt with your Gemini API key
+
+
+### Option 1: Automated Startup (Recommended)
+
 ```bash
+# Using bash script
+./start.sh
+
+# Or using Python script
+python start.py
+```
+
+### Option 2: Manual Setup
+
+See [SETUP.md](SETUP.md) for detailed instructions.
+
+**Quick summary:**
+
+1. **Backend Setup**:
+```bash
+cd backend
 pip install -r requirements.txt
-
-# install playwright browsers
-playwright install chromium
-
-# or use the setup script
-./setup_playwright.sh
+python app.py
 ```
 
-2. set up api keys:
-   - copy `.env.example` to `.env`
-   - add your gemini api key
-   - choose between openai or open source models (see below)
-   - configure mcp server url (if needed)
-
-3. ensure mcp server is running for browser automation
-
-### using openai (default)
-set in `.env`:
-```
-OPENAI_API_KEY=your_key_here
-OPENAI_MODEL_NAME=gpt-4
+2. **Frontend Setup**:
+```bash
+cd "BOM to Order/frontend"
+pnpm install
+pnpm dev
 ```
 
-### using open source models
-this app supports any openai-compatible api (ollama, lm studio, vllm, etc.)
+3. **Access**:
+   - Frontend: http://localhost:5173
+   - Backend: http://localhost:5000
 
-**option 1: ollama**
-1. install ollama from https://ollama.ai
-2. pull a model: `ollama pull llama3.1`
-3. set in `.env`:
+## Prerequisites
+
+- Python 3.8+
+- Node.js 18+
+- Ollama (with `llama3.2:1b` model)
+- Google Gemini API key (in `API_Key.txt`)
+
+## Architecture
+
 ```
-USE_OPEN_SOURCE_MODEL=true
-OPEN_SOURCE_BASE_URL=http://localhost:11434/v1
-OPEN_SOURCE_MODEL_NAME=llama3.1
+┌─────────────────────────────────────┐
+│   React Frontend (Vite + TypeScript)│
+│   - File upload & preview           │
+│   - Results display                 │
+└──────────────┬──────────────────────┘
+               │ HTTP API
+┌──────────────▼──────────────────────┐
+│   Flask Backend (Python)            │
+│   - API endpoints                   │
+│   - File processing                 │
+└──────────────┬──────────────────────┘
+               │
+    ┌──────────┴──────────┐
+    ▼                     ▼
+┌─────────────┐   ┌──────────────┐
+│ csv_parser  │   │ gemini_seller│
+│  (Ollama)   │   │  (Gemini AI) │
+└─────────────┘   └──────────────┘
 ```
 
-**option 2: lm studio**
-1. install lm studio from https://lmstudio.ai
-2. load a model and start the server
-3. set in `.env`:
+## Project Structure
+
 ```
-USE_OPEN_SOURCE_MODEL=true
-OPEN_SOURCE_BASE_URL=http://localhost:1234/v1
-OPEN_SOURCE_MODEL_NAME=your-model-name
+calhacks-2025/
+├── backend/                 # Flask API server
+│   ├── app.py              # Main API server
+│   ├── csv_parser.py       # BOM parsing with Ollama
+│   ├── gemini_seller.py    # Seller lookup with Gemini
+│   └── requirements.txt    # Python dependencies
+├── BOM to Order/
+│   └── frontend/           # React frontend
+│       ├── src/
+│       │   ├── components/ # UI components
+│       │   ├── lib/        # API client
+│       │   └── pages/      # Page components
+│       └── package.json
+├── csv_parser.ipynb        # Original parsing notebook
+├── gemini_seller_info.ipynb # Original seller lookup notebook
+├── start.sh                # Bash startup script
+├── start.py                # Python startup script
+├── SETUP.md               # Detailed setup guide
+└── README.md              # This file
 ```
 
-**option 3: any openai-compatible endpoint**
-```
-USE_OPEN_SOURCE_MODEL=true
-OPEN_SOURCE_BASE_URL=http://your-endpoint/v1
-OPEN_SOURCE_MODEL_NAME=your-model-name
-OPEN_SOURCE_API_KEY=your-key-if-needed
-```
+## Usage
 
-## usage
+1. **Upload BOM File**: Drag and drop or click to upload your BOM file (CSV, XLSX, or TXT)
+2. **Preview**: Review the uploaded data in table format
+3. **Process**: Click "Find Sellers" to run the AI pipeline
+4. **Results**: View seller recommendations with direct links
 
-run the automated ordering system:
+## API Documentation
+
+See [backend/README.md](backend/README.md) for complete API documentation.
+
+### Key Endpoints
+
+- `POST /api/process-bom` - Complete pipeline (parse + seller lookup)
+- `POST /api/parse-bom` - Parse BOM only
+- `POST /api/get-sellers` - Get sellers for parsed items
+- `GET /health` - Health check
+
+## Development
+
+### Backend Development
 
 ```bash
-python main.py path/to/your/bom.csv
+cd backend
+python app.py  # Runs on http://localhost:5000
 ```
 
-options:
-- `--num-websites N`: number of websites to search per part (default: 3)
-- `--output FILE`: specify output csv file path
-- `--gemini-key KEY`: provide gemini api key directly
-- `--openai-key KEY`: provide openai api key directly
-- `--use-open-source`: use open source model instead of openai
-- `--model-name NAME`: specify model name (e.g., llama3.1, gpt-4)
-- `--base-url URL`: specify base url for model api
-- `--show-browser`: show browser window (watch automation happen)
-- `--headless`: run browser in background (faster, invisible)
-- `--no-browser`: use llm simulation instead of real browser
+### Frontend Development
 
-examples:
 ```bash
-# recommended: visible browser (avoids cloudflare/bot detection)
-python main.py example_bom.csv --show-browser
-
-# with open source model and visible browser
-python main.py example_bom.csv --use-open-source --show-browser
-
-# headless mode (⚠️ may be detected by cloudflare on digikey/mouser)
-python main.py example_bom.csv --headless
-
-# headless with more websites (not recommended for protected sites)
-python main.py example_bom.csv --headless --num-websites 5
-
-# llm simulation only (no real browser)
-python main.py example_bom.csv --no-browser
+cd "BOM to Order/frontend"
+pnpm dev  # Runs on http://localhost:5173
 ```
 
-**important:** digikey and mouser use cloudflare protection. for best results:
-- use `--show-browser` (visible mode)
-- headless mode will likely be blocked
-- see `ANTI_DETECTION.md` for details
+## Troubleshooting
 
-## how it works
+See [SETUP.md](SETUP.md#troubleshooting) for common issues and solutions.
 
-### step 1: bom parsing (`bom_parser.py`)
-parses the input csv and extracts part information
+## Technologies
 
-### step 2: website discovery (`website_finder.py`)
-uses gemini api to find relevant supplier websites for each part
+**Frontend:**
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui components
+- React Query
 
-### step 3: browser automation (`browser_controller.py` + `playwright_mcp_bridge.py`)
-uses playwright to actually control a real browser:
-- opens chromium browser (visible or headless)
-- navigates to supplier websites
-- searches for parts using real search forms
-- extracts actual pricing and product urls from live pages
-- adds items to real shopping carts
+**Backend:**
+- Flask
+- pandas
+- Ollama (llama3.2:1b)
+- Google Generative AI (Gemini)
 
-can run in visible mode (watch it work) or headless mode (faster)
+## License
 
-### step 4: results compilation (`csv_updater.py`)
-appends search results to the original csv with new columns:
-- website
-- product_name_found
-- product_url
-- price
-- cart_url
-- added_to_cart
+MIT
 
-## example bom format
+## Contributors
 
-```csv
-part_name,quantity,description
-Arduino Uno R3,2,microcontroller board
-HC-SR04 Ultrasonic Sensor,5,distance sensor
-```
+Created for CalHacks 2025
 
-the system works with various csv formats and automatically detects the part name column.
