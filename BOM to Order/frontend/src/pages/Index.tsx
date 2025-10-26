@@ -1,16 +1,23 @@
 import { useState } from "react";
 import FileUpload from "@/components/FileUpload";
 import BOMPreview from "@/components/BOMPreview";
-import { Package } from "lucide-react";
+import SellerResults from "@/components/SellerResults";
+import { Package, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { apiClient, ItemWithSellers } from "@/lib/api";
 import * as XLSX from "xlsx";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [bomData, setBomData] = useState<string[][]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [sellerResults, setSellerResults] = useState<ItemWithSellers[]>([]);
+  const { toast } = useToast();
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
-    
+
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     let data: string[][] = [];
 
@@ -28,17 +35,48 @@ const Index = () => {
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-      data = jsonData.map((row: any) => 
+      data = jsonData.map((row: any) =>
         row.map((cell: any) => cell?.toString() || '')
       );
     }
-    
+
     setBomData(data);
   };
 
   const handleClear = () => {
     setSelectedFile(null);
     setBomData([]);
+    setSellerResults([]);
+  };
+
+  const handleProcessBOM = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "No file selected",
+        description: "Please select a BOM file first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const result = await apiClient.processBOM(selectedFile);
+      setSellerResults(result.seller_info);
+      toast({
+        title: "Processing complete!",
+        description: `Found seller information for ${result.seller_info.length} items`,
+      });
+    } catch (error) {
+      console.error("Error processing BOM:", error);
+      toast({
+        title: "Processing failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -66,7 +104,33 @@ const Index = () => {
           />
 
           {/* Preview Section */}
-          {bomData.length > 0 && <BOMPreview data={bomData} />}
+          {bomData.length > 0 && (
+            <>
+              <BOMPreview data={bomData} />
+
+              {/* Process Button */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleProcessBOM}
+                  disabled={isProcessing}
+                  size="lg"
+                  className="min-w-[200px]"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Find Sellers"
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* Seller Results */}
+          {sellerResults.length > 0 && <SellerResults results={sellerResults} />}
         </div>
 
         {/* Info Section */}
