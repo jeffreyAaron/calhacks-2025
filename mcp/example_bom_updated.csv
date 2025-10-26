@@ -1,0 +1,7 @@
+part_name,quantity,description,website,product_name_found,product_url,price,cart_url,added_to_cart
+Arduino Uno R3,2,microcontroller board,https://www.adafruit.com/,,,,,False
+HC-SR04 Ultrasonic Sensor,5,distance sensor,https://www.adafruit.com/,,,,,False
+SG90 Servo Motor,3,9g micro servo,https://www.adafruit.com/,,,,,False
+LCD1602 Display,1,16x2 character lcd,https://www.adafruit.com/,,,,,False
+Breadboard 830 Point,2,solderless breadboard,https://www.adafruit.com/,,,,,False
+Jumper Wire Kit,1,assorted jumper wires,https://www.adafruit.com/,,,,,False
