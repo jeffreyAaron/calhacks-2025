@@ -1,11 +1,4 @@
 name,quantity
-,
-Stepper Motor,11.0
-Relay Module,30.0
-Heat Sink,27.0
-LED Strip,48.0
-,31.0
-ESP32 Module,23.0
-SD Card Reader,34.0
-Breadboard,19.0
-,48.0
+0603 Resistor, 10.0
+0805 Resistor, 10.0 
+

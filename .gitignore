@@ -160,3 +160,5 @@ ENV/
 # Output files
 sourcing_recommendations.txt
 
+# API Keys
+API_Key.txt
